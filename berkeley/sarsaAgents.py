@@ -12,6 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 # SARSA Agent extension by Anderson Tavares (anderson@dcc.ufmg.br)
 
+# Aluno: 286120
 
 from game import *
 from learningAgents import ReinforcementAgent
@@ -52,7 +53,7 @@ class SarsaAgent(ReinforcementAgent):
         "You can initialize Q-values here..."
         ReinforcementAgent.__init__(self, **args)
 
-        "*** YOUR CODE HERE ***"
+        self.Qvalues = util.Counter()
 
     def getQValue(self, state, action):
         """
@@ -60,8 +61,7 @@ class SarsaAgent(ReinforcementAgent):
           Should return 0.0 if we have never seen a state
           or the Q node value otherwise
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.Qvalues[(state,action)]
 
 
     def computeValueFromQValues(self, state):
@@ -71,8 +71,14 @@ class SarsaAgent(ReinforcementAgent):
           there are no legal actions, which is the case at the
           terminal state, you should return a value of 0.0.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        legal_actions = self.getLegalActions(state)
+        if len(legal_actions) <= 0:
+            return 0.0
+        return sorted(
+            (self.Qvalues[(state,a)]
+                for a in legal_actions),
+            reverse=True
+        )[0]
 
     def computeActionFromQValues(self, state):
         """
@@ -80,8 +86,15 @@ class SarsaAgent(ReinforcementAgent):
           are no legal actions, which is the case at the terminal state,
           you should return None.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        legal_actions = self.getLegalActions(state)
+        if len(legal_actions) <= 0:
+            return None
+        return sorted(
+            ((self.Qvalues[(state,a)], a)
+                for a in legal_actions),
+            key=lambda x:x[0],
+            reverse=True
+        )[0][1]
 
     def computeAction(self, state):
         """
@@ -95,19 +108,20 @@ class SarsaAgent(ReinforcementAgent):
           HINT: To pick randomly from a list, use random.choice(list)
         """
         # Pick Action
-        legalActions = self.getLegalActions(state)
-        action = None
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
-        return action
+        legal_actions = self.getLegalActions(state)
+        if len(legal_actions) <= 0:
+            return None
+        return (
+                random.choice(legal_actions)
+                if util.flipCoin(self.epsilon)
+                else self.computeActionFromQValues(state)
+        )
 
     def getAction(self, state):
         """
           Returns the action computed in computeAction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.computeAction(state)
 
 
     def update(self, state, action, nextState, reward):
@@ -119,8 +133,15 @@ class SarsaAgent(ReinforcementAgent):
           NOTE: You should never call this function,
           it will be called on your behalf
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        nextAction = self.computeAction(nextState)
+        self.Qvalues[(state,action)] = (
+                self.Qvalues[(state,action)]
+                + self.alpha * (
+                        reward
+                        + self.discount * self.Qvalues[(nextState,nextAction)]
+                        - self.Qvalues[(state,action)]
+                )
+        )
 
     def getPolicy(self, state):
         return self.computeActionFromQValues(state)
