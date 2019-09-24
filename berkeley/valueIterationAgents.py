@@ -11,6 +11,7 @@
 # Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
+# Aluno: 286120
 
 import mdp, util
 
@@ -18,14 +19,14 @@ from learningAgents import ValueEstimationAgent
 
 class ValueIterationAgent(ValueEstimationAgent):
     """
-        * Please read learningAgents.py before reading this.*
+    * Please read learningAgents.py before reading this.*
 
-        A ValueIterationAgent takes a Markov decision process
-        (see mdp.py) on initialization and runs value iteration
-        for a given number of iterations using the supplied
-        discount factor.
+    A ValueIterationAgent takes a Markov decision process
+    (see mdp.py) on initialization and runs value iteration
+    for a given number of iterations using the supplied
+    discount factor.
     """
-    def __init__(self, mdp, discount = 0.9, iterations = 100):
+    def __init__(self, mdp, discount = 0.9, iterations = 100, inplace=False):
         """
           Your value iteration agent should take an mdp on
           construction, run the indicated number of iterations
@@ -44,7 +45,27 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.values = util.Counter() # A Counter is a dict with default 0
 
         # Write value iteration code here
-        "*** YOUR CODE HERE ***"
+        self.error = 0
+        for i in range(self.iterations):
+            self.error = 0
+            if not inplace:
+                old_values = self.values.copy()
+            for s in self.mdp.getStates():
+                v = self.values[s] if inplace else old_values[s]
+                possible_actions = self.mdp.getPossibleActions(s)
+                if len(possible_actions)<=0:
+                    continue
+                self.values[s] = max(
+                    (sum(
+                        p * (self.mdp.getReward(s,a,ss) +
+                            self.discount*(
+                                self.values[ss] if inplace
+                                else old_values[ss]
+                                ))
+                        for ss,p in self.mdp.getTransitionStatesAndProbs(s,a)
+                    ) for a in possible_actions)
+                )
+                self.error = max(self.error,abs(v-self.values[s]))
 
 
     def getValue(self, state):
@@ -59,8 +80,14 @@ class ValueIterationAgent(ValueEstimationAgent):
           Compute the Q-value of action in state from the
           value function stored in self.values.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        if action == "exit":
+            return self.mdp.getReward(state,action,"TERMINAL_STATE")
+        ss_and_ps = self.mdp.getTransitionStatesAndProbs(state,action)
+        return sum(
+            (p * (self.values[ss] * self.discount)
+            for ss,p in ss_and_ps)
+        )
+        return ret
 
     def computeActionFromValues(self, state):
         """
@@ -71,8 +98,15 @@ class ValueIterationAgent(ValueEstimationAgent):
           there are no legal actions, which is the case at the
           terminal state, you should return None.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        possible_actions = self.mdp.getPossibleActions(state)
+        if len(possible_actions) <= 0:
+            return None
+        return sorted(
+            ((self.computeQValueFromValues(state,a), a)
+                for a in possible_actions),
+            key=lambda x:x[0],
+            reverse=True
+        )[0][1]
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
