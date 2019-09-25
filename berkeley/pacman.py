@@ -461,6 +461,12 @@ class GhostRules:
 def default(str):
     return str + ' [Default: %default]'
 
+def try_number(s):
+    try:
+        return float(s)
+    except ValueError:
+        return s
+
 def parseAgentArgs(str):
     if str == None: return {}
     pieces = str.split(',')
@@ -468,8 +474,10 @@ def parseAgentArgs(str):
     for p in pieces:
         if '=' in p:
             key, val = p.split('=')
+            val = try_number(val) # handles numeric parameters
         else:
             key,val = p, 1
+
         opts[key] = val
     return opts
 
