@@ -54,6 +54,9 @@ class SarsaAgent(ReinforcementAgent):
         ReinforcementAgent.__init__(self, **args)
 
         self.Qvalues = util.Counter()
+        
+        self.lamda=lamda
+        self.epsilon_decay=epsilon_decay
 
     def getQValue(self, state, action):
         """
@@ -133,15 +136,19 @@ class SarsaAgent(ReinforcementAgent):
           NOTE: You should never call this function,
           it will be called on your behalf
         """
-        nextAction = self.computeAction(nextState)
-        self.Qvalues[(state,action)] = (
-                self.Qvalues[(state,action)]
-                + self.alpha * (
-                        reward
-                        + self.discount * self.Qvalues[(nextState,nextAction)]
-                        - self.Qvalues[(state,action)]
-                )
-        )
+        print(type(self.lamda),self.lamda)
+        if self.lamda==0:
+            nextAction = self.computeAction(nextState)
+            self.Qvalues[(state,action)] = (
+                    self.Qvalues[(state,action)]
+                    + self.alpha * (
+                            reward
+                            + self.discount * self.Qvalues[(nextState,nextAction)]
+                            - self.Qvalues[(state,action)]
+                    )
+            )
+        else:
+            raise NotImplementedError("auishdaidhuai")
 
     def getPolicy(self, state):
         return self.computeActionFromQValues(state)
