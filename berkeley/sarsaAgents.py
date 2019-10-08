@@ -51,6 +51,7 @@ class SarsaAgent(ReinforcementAgent):
     """
 
     TRACE_MIN_VALUE = 1e-6
+    QVALUE_MIN_VALUE = 1e-12
     
     def __init__(self, epsilon_decay=1, lamda=0, **args):
         "You can initialize Q-values here..."
@@ -159,9 +160,19 @@ class SarsaAgent(ReinforcementAgent):
                         self.Qvalues[(s,a)]
                         + self.alpha * delta * self.traces[(s,a)]
                 )
+                
+                # Guarding against underflow
+                if self.Qvalues[(s,a)] < SarsaAgent.QVALUE_MIN_VALUE:
+                    self.Qvalues[(s,a)] = 0.
+                
+                # Marking small traces for deletion
                 self.traces[(s,a)] *= self.lamda * self.discount
                 if self.traces[(s,a)] < SarsaAgent.TRACE_MIN_VALUE:
                     vanished.append((s,a))
+            # If the action is exit, unmark traces for deletion and clear all traces
+            if action == "exit":
+                vanished = []
+                self.traces.clear()
             for s,a in vanished:
                 del self.traces[(s,a)]
 
