@@ -162,8 +162,9 @@ class SarsaAgent(ReinforcementAgent):
                 )
                 
                 # Guarding against underflow
-                if self.Qvalues[(s,a)] < SarsaAgent.QVALUE_MIN_VALUE:
-                    self.Qvalues[(s,a)] = 0.
+                # FIXME Doing this makes the agent not learn anything on pacman
+                #if self.Qvalues[(s,a)] < SarsaAgent.QVALUE_MIN_VALUE:
+                #    self.Qvalues[(s,a)] = 0.
                 
                 # Marking small traces for deletion
                 self.traces[(s,a)] *= self.lamda * self.discount
