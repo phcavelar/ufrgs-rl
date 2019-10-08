@@ -50,7 +50,7 @@ class SarsaAgent(ReinforcementAgent):
           which returns legal actions for a state
     """
 
-    TRACE_MIN_VALUE = 0
+    TRACE_MIN_VALUE = 1e-6
     
     def __init__(self, epsilon_decay=1, lamda=0, **args):
         "You can initialize Q-values here..."
