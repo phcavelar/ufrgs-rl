@@ -49,14 +49,19 @@ class SarsaAgent(ReinforcementAgent):
         - self.getLegalActions(state)
           which returns legal actions for a state
     """
+
+    TRACE_MIN_VALUE = 0
+    
     def __init__(self, epsilon_decay=1, lamda=0, **args):
         "You can initialize Q-values here..."
         ReinforcementAgent.__init__(self, **args)
 
         self.Qvalues = util.Counter()
+        self.lamda = lamda
         
-        self.lamda=lamda
-        self.epsilon_decay=epsilon_decay
+        if self.lamda>0:
+            self.traces = util.Counter()
+            
 
     def getQValue(self, state, action):
         """
@@ -136,19 +141,29 @@ class SarsaAgent(ReinforcementAgent):
           NOTE: You should never call this function,
           it will be called on your behalf
         """
-        print(type(self.lamda),self.lamda)
+        nextAction = self.computeAction(nextState)
+        delta = (reward + 
+                self.discount * self.Qvalues[(nextState,nextAction)] -
+                self.Qvalues[(state,action)]
+        )
         if self.lamda==0:
-            nextAction = self.computeAction(nextState)
             self.Qvalues[(state,action)] = (
                     self.Qvalues[(state,action)]
-                    + self.alpha * (
-                            reward
-                            + self.discount * self.Qvalues[(nextState,nextAction)]
-                            - self.Qvalues[(state,action)]
-                    )
+                    + self.alpha * delta
             )
         else:
-            raise NotImplementedError("auishdaidhuai")
+            self.traces[(state,action)] += 1
+            vanished = []
+            for s,a in self.traces:
+                self.Qvalues[(s,a)] = (
+                        self.Qvalues[(s,a)]
+                        + self.alpha * delta * self.traces[(s,a)]
+                )
+                self.traces[(s,a)] *= self.lamda * self.discount
+                if self.traces[(s,a)] < SarsaAgent.TRACE_MIN_VALUE:
+                    vanished.append((s,a))
+            for s,a in vanished:
+                del self.traces[(s,a)]
 
     def getPolicy(self, state):
         return self.computeActionFromQValues(state)
