@@ -17,7 +17,7 @@ from game import *
 from learningAgents import ReinforcementAgent
 from featureExtractors import *
 
-import random,util,math
+import random,util,math,itertools
 
 class QLearningAgent(ReinforcementAgent):
     """
@@ -79,12 +79,18 @@ class QLearningAgent(ReinforcementAgent):
         legal_actions = self.getLegalActions(state)
         if len(legal_actions) <= 0:
             return None
-        return sorted(
+        actions = sorted(
             ((self.Qvalues[(state,a)], a)
                 for a in legal_actions),
             key=lambda x:x[0],
             reverse=True
-        )[0][1]
+        )
+        best_action = actions[0]
+        best_actions = list(itertools.takewhile(
+                lambda x: x[0]==best_action[0],
+                actions
+        ))
+        return random.choice(best_actions)[1] 
 
     def getAction(self, state):
         """
