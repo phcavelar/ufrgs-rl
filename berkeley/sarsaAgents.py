@@ -84,7 +84,7 @@ class SarsaAgent(ReinforcementAgent):
         if len(legal_actions) <= 0:
             return 0.0
         return sorted(
-            (self.getQvalue(state,a)
+            (self.getQValue(state,a)
                 for a in legal_actions),
             reverse=True
         )[0]
@@ -99,7 +99,7 @@ class SarsaAgent(ReinforcementAgent):
         if len(legal_actions) <= 0:
             return None
         actions = sorted(
-            ((self.getQvalue(state,a), a)
+            ((self.getQValue(state,a), a)
                 for a in legal_actions),
             key=lambda x:x[0],
             reverse=True
@@ -150,12 +150,12 @@ class SarsaAgent(ReinforcementAgent):
         """
         nextAction = self.computeAction(nextState)
         delta = (reward + 
-                self.discount * self.getQvalue(nextState,nextAction) -
-                self.getQvalue(state,action)
+                self.discount * self.getQValue(nextState,nextAction) -
+                self.getQValue(state,action)
         )
         if self.lamda==0:
             self.Qvalues[(state,action)] = (
-                    self.getQvalue(state,action)
+                    self.getQValue(state,action)
                     + self.alpha * delta
             )
         else:
@@ -163,13 +163,13 @@ class SarsaAgent(ReinforcementAgent):
             vanished = []
             for s,a in self.traces:
                 self.Qvalues[(s,a)] = (
-                        self.getQvalue(s,a)
+                        self.getQValue(s,a)
                         + self.alpha * delta * self.traces[(s,a)]
                 )
                 
                 # Guarding against underflow
                 # FIXME Doing this makes the agent not learn anything on pacman
-                #if self.getQvalue(s,a) < SarsaAgent.QVALUE_MIN_VALUE:
+                #if self.getQValue(s,a) < SarsaAgent.QVALUE_MIN_VALUE:
                 #    self.Qvalues[(s,a)] = 0.
                 
                 # Marking small traces for deletion
