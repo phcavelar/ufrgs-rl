@@ -65,7 +65,7 @@ class QLearningAgent(ReinforcementAgent):
         if len(legal_actions) <= 0:
             return 0.0
         return sorted(
-            (self.Qvalues[(state,a)]
+            (self.getQValue(state,a)
                 for a in legal_actions),
             reverse=True
         )[0]
@@ -80,7 +80,7 @@ class QLearningAgent(ReinforcementAgent):
         if len(legal_actions) <= 0:
             return None
         actions = sorted(
-            ((self.Qvalues[(state,a)], a)
+            ((self.getQValue(state,a), a)
                 for a in legal_actions),
             key=lambda x:x[0],
             reverse=True
@@ -123,11 +123,11 @@ class QLearningAgent(ReinforcementAgent):
           it will be called on your behalf
         """
         self.Qvalues[(state,action)] = (
-                self.Qvalues[(state,action)]
+                self.getQValue(state,action)
                 + self.alpha * (
                         reward
                         + self.discount * self.computeValueFromQValues(nextState)
-                        - self.Qvalues[(state,action)]
+                        - self.getQValue(state,action)
                 )
         )
 

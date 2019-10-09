@@ -46,13 +46,13 @@ class DynaQAgent(ReinforcementAgent):
 
         self.Qvalues = util.Counter()
         
+        self.plan_steps = plan_steps
+        self.kappa = kappa
+        
         self.model = dict()
         self.last_visited = dict()
         self.steps_from_beginning = 1
         self.actions_in = dict()
-        
-        self.plan_steps = plan_steps
-        self.kappa = kappa
 
     def getQValue(self, state, action):
         """
@@ -143,7 +143,6 @@ class DynaQAgent(ReinforcementAgent):
                 s,a = state,untaken_action
                 self.model[(s,a)] = (s,0)
                 self.last_visited[(s,a)] = self.steps_from_beginning
-            self.actions_in[state] = set(legal_actions)
         if self.kappa>0:
             for s,a in self.model:
                 self.last_visited[(s,a)] += 1
