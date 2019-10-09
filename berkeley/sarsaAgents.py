@@ -243,15 +243,51 @@ class ApproximateSarsaAgent(PacmanSarsaAgent):
           Should return Q(state,action) = w * featureVector
           where * is the dotProduct operator
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        features = self.featExtractor.getFeatures(state,action)
+        return sum((features[f]*self.weights[f] for f in features))
 
     def update(self, state, action, nextState, reward):
         """
                    Should update your weights based on transition
                 """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        delta = reward
+        features = self.featExtractor.getFeatures(state,action)
+        if self.lamda==0:
+            for f in features:
+                delta += -self.weights[f]
+            nextAction = self.computeAction(nextState)
+            if nextAction is not None:
+                new_features = self.featExtractor.getFeatures(nextState,nextAction)
+                for f in new_features:
+                    delta += self.discount * self.weights[f]
+            for f in features:
+                self.weights[f] += self.alpha * delta
+        else:
+            for f in features:
+                delta += -self.weights[f]
+                self.traces[f] += 1
+            nextAction = self.computeAction(nextState)
+            if nextAction is not None:
+                new_features = self.featExtractor.getFeatures(nextState,nextAction)
+                for f in new_features:
+                    delta += self.discount * self.weights[f]
+            
+            vanished = []
+            for f in self.traces:
+                self.weights[f] += self.alpha * delta * self.traces[f]
+                
+                # Marking small traces for deletion
+                self.traces[f] *= self.lamda * self.discount
+                if self.traces[f] < SarsaAgent.TRACE_MIN_VALUE:
+                    vanished.append(f)
+            # If the action is exit, unmark traces for deletion and clear all traces
+            if action is None:
+                vanished = []
+                self.traces.clear()
+            for f in vanished:
+                del self.traces[f]
+                
+        
 
     def final(self, state):
         "Called at the end of each game."
