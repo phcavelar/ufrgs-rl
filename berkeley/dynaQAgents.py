@@ -45,7 +45,13 @@ class DynaQAgent(ReinforcementAgent):
         ReinforcementAgent.__init__(self, **args)
 
         self.Qvalues = util.Counter()
+        
         self.model = dict()
+        self.visited = set()
+        self.actions_in = dict()
+        
+        self.plan_steps = plan_steps
+        self.kappa = 0
 
     def getQValue(self, state, action):
         """
@@ -108,6 +114,24 @@ class DynaQAgent(ReinforcementAgent):
                 if util.flipCoin(self.epsilon)
                 else self.computeActionFromQValues(state)
         )
+        
+    def _update_q(self, state, action, nextState, reward):
+        self.Qvalues[(state,action)] = (
+                self.Qvalues[(state,action)]
+                + self.alpha * (
+                        reward
+                        + self.discount * self.computeValueFromQValues(nextState)
+                        - self.Qvalues[(state,action)]
+                )
+        )
+        
+    def _plan(self):
+        for i in range(self.plan_steps):
+            S = random.choice(list(self.visited))
+            A = random.choice(list(self.actions_in[S]))
+            SS,R = self.model[(S,A)]
+            self._update_q(S,A,SS,R)
+    
 
     def update(self, state, action, nextState, reward):
         """
@@ -120,15 +144,14 @@ class DynaQAgent(ReinforcementAgent):
 
           NOTE2: insert your planning code here as well
         """
-        self.Qvalues[(state,action)] = (
-                self.Qvalues[(state,action)]
-                + self.alpha * (
-                        reward
-                        + self.discount * self.computeValueFromQValues(nextState)
-                        - self.Qvalues[(state,action)]
-                )
-        )
-        #TODO: Planning
+        self._update_q(state,action,nextState,reward)
+        self.model[(state,action)] = (nextState,reward)
+        if state in self.visited:
+            self.actions_in[state].add(action)
+        else:
+            self.visited.add(state)
+            self.actions_in[state] = set([action])
+        self._plan()
 
     def getPolicy(self, state):
         return self.computeActionFromQValues(state)
