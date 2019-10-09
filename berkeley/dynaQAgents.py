@@ -47,11 +47,12 @@ class DynaQAgent(ReinforcementAgent):
         self.Qvalues = util.Counter()
         
         self.model = dict()
-        self.visited = set()
+        self.last_visited = dict()
+        self.steps_from_beginning = 1
         self.actions_in = dict()
         
         self.plan_steps = plan_steps
-        self.kappa = 0
+        self.kappa = kappa
 
     def getQValue(self, state, action):
         """
@@ -125,12 +126,30 @@ class DynaQAgent(ReinforcementAgent):
                 )
         )
         
+    def _update_model(self, state, action, nextState, reward):
+        self.model[(state,action)] = (nextState,reward)
+        if state in self.last_visited:
+            self.last_visited[(state,action)] = 0
+        else:
+            self.last_visited[(state,action)] = 0
+            legal_actions = self.getLegalActions(state)
+            for untaken_action in [a for a in legal_actions if a!=action]:
+                s,a = state,untaken_action
+                self.model[(s,a)] = (s,0)
+                self.last_visited[(s,a)] = self.steps_from_beginning
+            self.actions_in[state] = set(legal_actions)
+        if self.kappa>0:
+            for s,a in self.model:
+                self.last_visited[(s,a)] += 1
+            self.steps_from_beginning += 1
+            
+        
     def _plan(self):
         for i in range(self.plan_steps):
-            S = random.choice(list(self.visited))
-            A = random.choice(list(self.actions_in[S]))
+            S,A = random.choice(self.last_visited.keys())
             SS,R = self.model[(S,A)]
-            self._update_q(S,A,SS,R)
+            E = self.kappa * self.last_visited[S,A]**0.5
+            self._update_q(S,A,SS,R+E)
     
 
     def update(self, state, action, nextState, reward):
@@ -145,12 +164,7 @@ class DynaQAgent(ReinforcementAgent):
           NOTE2: insert your planning code here as well
         """
         self._update_q(state,action,nextState,reward)
-        self.model[(state,action)] = (nextState,reward)
-        if state in self.visited:
-            self.actions_in[state].add(action)
-        else:
-            self.visited.add(state)
-            self.actions_in[state] = set([action])
+        self._update_model(state,action,nextState,reward)
         self._plan()
 
     def getPolicy(self, state):
