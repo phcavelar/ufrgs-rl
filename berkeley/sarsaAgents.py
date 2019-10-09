@@ -19,7 +19,7 @@ from learningAgents import ReinforcementAgent
 from featureExtractors import *
 import collections
 
-import random, util, math
+import random, util, math, itertools
 
 class SarsaAgent(ReinforcementAgent):
     """
