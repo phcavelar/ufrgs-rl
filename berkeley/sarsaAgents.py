@@ -265,7 +265,7 @@ class ApproximateSarsaAgent(PacmanSarsaAgent):
         else:
             for f in features:
                 delta += -self.weights[f]
-                self.traces[f] += 1
+                self.traces[f] += features[f]
             nextAction = self.computeAction(nextState)
             if nextAction is not None:
                 new_features = self.featExtractor.getFeatures(nextState,nextAction)
@@ -277,11 +277,12 @@ class ApproximateSarsaAgent(PacmanSarsaAgent):
                 self.weights[f] += self.alpha * delta * self.traces[f]
                 
                 # Marking small traces for deletion
-                self.traces[f] *= self.lamda * self.discount
-                if self.traces[f] < SarsaAgent.TRACE_MIN_VALUE:
-                    vanished.append(f)
+                if nextAction is not None:
+                    self.traces[f] *= self.lamda * self.discount
+                    if self.traces[f] < SarsaAgent.TRACE_MIN_VALUE:
+                        vanished.append(f)
             # If the action is exit, unmark traces for deletion and clear all traces
-            if action is None:
+            if action is None or nextAction is None:
                 vanished = []
                 self.traces.clear()
             for f in vanished:
