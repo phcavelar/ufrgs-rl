@@ -134,19 +134,19 @@ class DynaQAgent(ReinforcementAgent):
         
     def _update_model(self, state, action, nextState, reward):
         self.model[(state,action)] = (nextState,reward)
-        if state in self.last_visited:
-            self.last_visited[(state,action)] = 0
-        else:
-            self.last_visited[(state,action)] = 0
-            legal_actions = self.getLegalActions(state)
-            for untaken_action in [a for a in legal_actions if a!=action]:
-                s,a = state,untaken_action
-                self.model[(s,a)] = (s,0)
-                self.last_visited[(s,a)] = self.steps_from_beginning
         if self.kappa>0:
+            if (state,action) not in self.last_visited:
+                legal_actions = self.getLegalActions(state)
+                for untaken_action in [a for a in legal_actions if a!=action]:
+                    s,a = state,untaken_action
+                    self.model[(s,a)] = (s,0)
+                    self.last_visited[(s,a)] = self.steps_from_beginning
+            self.last_visited[(state,action)] = 0
             for s,a in self.model:
                 self.last_visited[(s,a)] += 1
             self.steps_from_beginning += 1
+        else:
+            self.last_visited[(state,action)] = 1
             
         
     def _plan(self):
